@@ -2,19 +2,133 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Separated App - Python Backend</title>
+    <title>User Management - CRUD App</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 600px; margin: 30px auto; padding: 20px; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input { width: 100%; padding: 8px; box-sizing: border-box; }
+        button { padding: 8px 15px; background-color: #28a745; color: white; border: none; cursor: pointer; }
+        button:hover { background-color: #218838; }
+        .delete-btn { background-color: #dc3545; padding: 5px 10px; }
+        .delete-btn:hover { background-color: #c82333; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+        th { background-color: #f2f2f2; }
+    </style>
 </head>
 <body>
-    <h1>User Management</h1>
-    <div id="user-list"></div>
+
+    <h1>User Management System</h1>
+
+    <!-- Form to Add User -->
+    <h3>Add New User</h3>
+    <form id="userForm">
+        <div class="form-group">
+            <label for="name">Name:</label>
+            <input type="text" id="name" required>
+        </div>
+        <div class="form-group">
+            <label for="email">Email:</label>
+            <input type="email" id="email" required>
+        </div>
+        <div class="form-group">
+            <label for="age">Age:</label>
+            <input type="number" id="age" required>
+        </div>
+        <button type="submit">Add User</button>
+    </form>
+
+    <!-- Table to Display Users -->
+    <h3>Users List</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Age</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody id="userTableBody">
+            <!-- Users will be dynamically inserted here -->
+        </tbody>
+    </table>
 
     <script>
-        // Fetch users from the Python backend API
-        fetch('/api/users')
-            .then(res => res.json())
-            .then(data => {
-                console.log(data);
-            });
+        const API_URL = '/api/users';
+
+        // Function to fetch and display users
+        async function fetchUsers() {
+            try {
+                const response = await fetch(API_URL);
+                const users = await response.json();
+                
+                const tbody = document.getElementById('userTableBody');
+                tbody.innerHTML = '';
+
+                users.forEach(user => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${user.name}</td>
+                        <td>${user.email}</td>
+                        <td>${user.age}</td>
+                        <td><button class="delete-btn" onclick="deleteUser('${user.id}')">Delete</button></td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            } catch (error) {
+                console.error('Error fetching users:', error);
+            }
+        }
+
+        // Function to handle form submission (Create User)
+        document.getElementById('userForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const name = document.getElementById('name').value;
+            const email = document.getElementById('email').value;
+            const age = parseInt(document.getElementById('age').value);
+
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, email, age })
+                });
+
+                if (response.ok) {
+                    document.getElementById('userForm').reset();
+                    fetchUsers(); // Refresh table
+                } else {
+                    alert('Failed to create user');
+                }
+            } catch (error) {
+                console.error('Error creating user:', error);
+            }
+        });
+
+        // Function to delete a user
+        async function deleteUser(id) {
+            if (!confirm('Are you sure you want to delete this user?')) return;
+
+            try {
+                const response = await `${API_URL}/${id}`;
+                // Fixed fetch call for delete:
+                const deleteRes = await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
+
+                if (deleteRes.ok) {
+                    fetchUsers(); // Refresh table
+                } else {
+                    alert('Failed to delete user');
+                }
+            } catch (error) {
+                console.error('Error deleting user:', error);
+            }
+        }
+
+        // Load users on page load
+        fetchUsers();
     </script>
 </body>
 </html>
