@@ -6,9 +6,9 @@ from bson import ObjectId
 
 app = FastAPI()
 
-# Connect to Database EC2 IP passed via environment variable
-MONGO_URI = os.getenv("MONGO_URI", "mongodb://localhost:27017/crud_database")
-client = AsyncIOMotorClient(MONGO_URI)
+# Fixed variable name to match MONGO_URL
+MONGO_URL = "mongodb://abhi:abhi%401234@10.0.128.190:27017/?authSource=admin"
+client = AsyncIOMotorClient(MONGO_URL)
 db = client.crud_database
 collection = db.users
 
